@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		9B16C2F72F8A04D600E50AA2 /* MenuBarMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B16C2F62F8A04D600E50AA2 /* MenuBarMenu.swift */; };
 		A10000010000000000000001 /* EarthLensApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000110000000000000001 /* EarthLensApp.swift */; };
 		A10000020000000000000001 /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000120000000000000001 /* AppModel.swift */; };
 		A10000030000000000000001 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000130000000000000001 /* AppState.swift */; };
@@ -19,6 +20,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		9B16C2F62F8A04D600E50AA2 /* MenuBarMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarMenu.swift; sourceTree = "<group>"; };
 		A10000100000000000000001 /* EarthLens.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = EarthLens.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A10000110000000000000001 /* EarthLensApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EarthLensApp.swift; sourceTree = "<group>"; };
 		A10000120000000000000001 /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
@@ -94,6 +96,7 @@
 			children = (
 				A10000170000000000000001 /* ContentView.swift */,
 				A10000180000000000000001 /* GlassPanel.swift */,
+				9B16C2F62F8A04D600E50AA2 /* MenuBarMenu.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -169,6 +172,7 @@
 			files = (
 				A10000020000000000000001 /* AppModel.swift in Sources */,
 				A10000070000000000000001 /* ContentView.swift in Sources */,
+				9B16C2F72F8A04D600E50AA2 /* MenuBarMenu.swift in Sources */,
 				A10000080000000000000001 /* GlassPanel.swift in Sources */,
 				A10000050000000000000001 /* LaunchAgentService.swift in Sources */,
 				A10000030000000000000001 /* AppState.swift in Sources */,

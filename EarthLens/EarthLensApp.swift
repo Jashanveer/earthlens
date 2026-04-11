@@ -30,6 +30,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             }
         }
     }
+
+    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
+        false
+    }
+
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        if !flag {
+            NSApp.setActivationPolicy(.regular)
+        }
+        return true
+    }
 }
 
 @main
@@ -44,13 +55,16 @@ struct EarthLensApp: App {
     }
 
     var body: some Scene {
-        WindowGroup {
+        WindowGroup(id: "main") {
             Group {
                 if launchMode == .interactive {
                     ContentView()
                         .environmentObject(model)
                         .task {
                             await model.handleAppLaunch()
+                        }
+                        .onDisappear {
+                            NSApp.setActivationPolicy(.accessory)
                         }
                 } else {
                     Color.clear
@@ -62,6 +76,11 @@ struct EarthLensApp: App {
         .windowStyle(.hiddenTitleBar)
         .commands {
             CommandGroup(replacing: .newItem) { }
+        }
+
+        MenuBarExtra("EarthLens", systemImage: "globe.americas.fill") {
+            MenuBarMenu()
+                .environmentObject(model)
         }
     }
 }

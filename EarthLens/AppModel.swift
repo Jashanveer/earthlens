@@ -20,6 +20,12 @@ final class AppModel: ObservableObject {
         await perform("Syncing local catalog") {
             try await self.service.reconcileSchedulePathIfNeeded()
         }
+
+        if snapshot.currentID == nil {
+            await perform("Setting your first wallpaper") {
+                try await self.service.setNextWallpaper()
+            }
+        }
     }
 
     func changeWallpaper() async {
