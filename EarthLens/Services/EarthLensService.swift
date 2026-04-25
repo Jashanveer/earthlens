@@ -3,10 +3,10 @@ import Foundation
 
 actor EarthLensService {
     private let fileManager = FileManager.default
-    private let scheduler = LaunchAgentService()
     private let catalogURL = URL(string: "https://raw.githubusercontent.com/limhenry/earthview/master/earthview.json")!
     private let imageBaseURL = URL(string: "https://www.gstatic.com/prettyearth/assets/full/")!
     private let catalogMaxAge: TimeInterval = 60 * 60 * 24 * 7
+    private let maxLogFileBytes: UInt64 = 256 * 1024
 
     func loadSnapshot(forceRefresh: Bool = false) async throws -> AppSnapshot {
         try AppPaths.ensureDirectories()
@@ -14,13 +14,6 @@ actor EarthLensService {
         var state = try loadState()
         normalize(&state)
         let catalog = try await loadCatalog(forceRefresh: forceRefresh)
-        let launchAgentStatus = scheduler.status(fallbackState: state)
-
-        state.rotationEnabled = launchAgentStatus.enabled
-        state.rotationInterval = launchAgentStatus.interval
-        if let executablePath = launchAgentStatus.executablePath {
-            state.lastKnownExecutablePath = executablePath
-        }
 
         try saveState(state)
         return makeSnapshot(from: state, catalog: catalog)
@@ -71,55 +64,27 @@ actor EarthLensService {
         state.rotationInterval = interval
 
         if enabled {
-            let executablePath = try resolvedExecutablePath()
-
             if advanceImmediately {
                 let catalog = try await loadCatalog(forceRefresh: false)
                 try await advanceToNextWallpaper(state: &state, catalog: catalog)
             }
 
             state.rotationEnabled = true
-            state.lastKnownExecutablePath = executablePath
             state.setupCompleted = true
             try saveState(state)
 
             do {
-                try scheduler.install(interval: interval, executablePath: executablePath)
+                try LoginItemService.register()
             } catch {
-                state.rotationEnabled = false
-                try? saveState(state)
-                throw error
+                appendLog("Login item registration failed: \(error.localizedDescription)")
             }
         } else {
-            try scheduler.uninstall()
-            state.rotationEnabled = false
-            try saveState(state)
-        }
-
-        return try await loadSnapshot(forceRefresh: false)
-    }
-
-    func reconcileSchedulePathIfNeeded() async throws -> AppSnapshot {
-        try AppPaths.ensureDirectories()
-
-        var state = try loadState()
-        normalize(&state)
-
-        guard state.rotationEnabled else {
-            if scheduler.hasCurrentConfiguration || scheduler.hasLegacyConfiguration {
-                try scheduler.uninstall()
+            do {
+                try await LoginItemService.unregister()
+            } catch {
+                appendLog("Login item unregistration failed: \(error.localizedDescription)")
             }
-            return try await loadSnapshot(forceRefresh: false)
-        }
-
-        let executablePath = try resolvedExecutablePath()
-        if
-            state.lastKnownExecutablePath != executablePath ||
-            !scheduler.hasCurrentConfiguration ||
-            scheduler.hasLegacyConfiguration
-        {
-            try scheduler.install(interval: state.rotationInterval, executablePath: executablePath)
-            state.lastKnownExecutablePath = executablePath
+            state.rotationEnabled = false
             try saveState(state)
         }
 
@@ -137,19 +102,15 @@ actor EarthLensService {
             try await advanceToNextWallpaper(state: &state, catalog: catalog)
         }
 
-        let executablePath = try resolvedExecutablePath()
         state.rotationEnabled = true
         state.rotationInterval = interval
-        state.lastKnownExecutablePath = executablePath
         state.setupCompleted = true
         try saveState(state)
 
         do {
-            try scheduler.install(interval: interval, executablePath: executablePath)
+            try LoginItemService.register()
         } catch {
-            state.rotationEnabled = false
-            try? saveState(state)
-            throw error
+            appendLog("Login item registration failed: \(error.localizedDescription)")
         }
 
         return try await loadSnapshot(forceRefresh: false)
@@ -165,29 +126,37 @@ actor EarthLensService {
         return try await loadSnapshot(forceRefresh: false)
     }
 
-    func rotateFromBackground() async throws {
-        do {
-            let snapshot = try await setNextWallpaper()
-            appendLog("Applied wallpaper \(snapshot.displayTitle)")
-        } catch {
-            appendLog("Background rotation failed: \(error.localizedDescription)")
-            throw error
-        }
-    }
-
     func appendLog(_ message: String) {
         let line = "[\(Date().formatted(date: .abbreviated, time: .standard))] \(message)\n"
         let data = Data(line.utf8)
 
-        if fileManager.fileExists(atPath: AppPaths.logFile.path) {
-            if let handle = try? FileHandle(forWritingTo: AppPaths.logFile) {
-                defer { try? handle.close() }
-                _ = try? handle.seekToEnd()
-                try? handle.write(contentsOf: data)
-            }
-        } else {
+        guard fileManager.fileExists(atPath: AppPaths.logFile.path) else {
             try? data.write(to: AppPaths.logFile, options: .atomic)
+            return
         }
+
+        trimLogIfNeeded()
+
+        if let handle = try? FileHandle(forWritingTo: AppPaths.logFile) {
+            defer { try? handle.close() }
+            _ = try? handle.seekToEnd()
+            try? handle.write(contentsOf: data)
+        }
+    }
+
+    private func trimLogIfNeeded() {
+        guard
+            let attributes = try? fileManager.attributesOfItem(atPath: AppPaths.logFile.path),
+            let size = attributes[.size] as? UInt64,
+            size > maxLogFileBytes,
+            let existing = try? Data(contentsOf: AppPaths.logFile)
+        else {
+            return
+        }
+
+        let keepBytes = Int(maxLogFileBytes / 2)
+        let suffix = existing.suffix(keepBytes)
+        try? Data(suffix).write(to: AppPaths.logFile, options: .atomic)
     }
 
     private func makeSnapshot(from state: PersistedState, catalog: CatalogCache) -> AppSnapshot {
@@ -460,30 +429,7 @@ actor EarthLensService {
                 try NSWorkspace.shared.setDesktopImageURL(imageURL, for: screen, options: [:])
             }
         } catch {
-            try setWallpaperViaAppleScript(at: imageURL)
-        }
-    }
-
-    @MainActor
-    private func setWallpaperViaAppleScript(at imageURL: URL) throws {
-        let escapedPath = imageURL.path
-            .replacingOccurrences(of: "\\", with: "\\\\")
-            .replacingOccurrences(of: "\"", with: "\\\"")
-
-        let source = """
-        tell application "System Events"
-            tell every desktop
-                set picture to "\(escapedPath)"
-            end tell
-        end tell
-        """
-
-        var errorInfo: NSDictionary?
-        let result = NSAppleScript(source: source)?.executeAndReturnError(&errorInfo)
-
-        guard result != nil else {
-            let reason = errorInfo?[NSAppleScript.errorMessage] as? String ?? "Unknown AppleScript error."
-            throw EarthLensError.wallpaperSetFailed(reason)
+            throw EarthLensError.wallpaperSetFailed(error.localizedDescription)
         }
     }
 
@@ -517,7 +463,7 @@ actor EarthLensService {
 
     private func normalize(_ state: inout PersistedState) {
         defer {
-            if !state.setupCompleted && (state.currentID != nil || state.rotationEnabled || state.lastKnownExecutablePath != nil) {
+            if !state.setupCompleted && (state.currentID != nil || state.rotationEnabled) {
                 state.setupCompleted = true
             }
         }
@@ -548,14 +494,6 @@ actor EarthLensService {
         if state.currentImageFilename == nil, let currentID = state.currentID {
             state.currentImageFilename = "\(currentID).jpg"
         }
-    }
-
-    private func resolvedExecutablePath() throws -> String {
-        guard let executablePath = Bundle.main.executableURL?.path else {
-            throw EarthLensError.missingExecutablePath
-        }
-
-        return executablePath
     }
 
     private var encoder: JSONEncoder {

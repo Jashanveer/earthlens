@@ -12,13 +12,20 @@ final class AppModel: ObservableObject {
 
     private let service = EarthLensService()
     private var hasLoaded = false
+    private var rotationTask: Task<Void, Never>?
+
+    init() {
+        Task { @MainActor [weak self] in
+            await self?.handleAppLaunch()
+        }
+    }
 
     func handleAppLaunch() async {
         guard !hasLoaded else { return }
         hasLoaded = true
 
-        await perform("Syncing local catalog") {
-            try await self.service.reconcileSchedulePathIfNeeded()
+        await perform("Loading EarthLens") {
+            try await self.service.loadSnapshot()
         }
 
         if snapshot.currentID == nil {
@@ -85,6 +92,28 @@ final class AppModel: ObservableObject {
         }
 
         isBusy = false
+        restartRotationLoop()
+    }
+
+    private func restartRotationLoop() {
+        rotationTask?.cancel()
+        guard snapshot.rotationEnabled else {
+            rotationTask = nil
+            return
+        }
+
+        let intervalSeconds = TimeInterval(snapshot.rotationInterval.rawValue)
+        rotationTask = Task { @MainActor [weak self] in
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(intervalSeconds))
+                guard let self, !Task.isCancelled else { return }
+                guard self.snapshot.rotationEnabled else { return }
+                if !self.isBusy {
+                    await self.changeWallpaper()
+                    return
+                }
+            }
+        }
     }
 
     private func makeStatusMessage(for snapshot: AppSnapshot) -> String {

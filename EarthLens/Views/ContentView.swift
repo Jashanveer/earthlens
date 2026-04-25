@@ -17,6 +17,13 @@ struct ContentView: View {
         }
         .frame(minWidth: 720, minHeight: 480)
         .animation(.spring(response: 0.42, dampingFraction: 0.86), value: model.showsSetupGuide)
+        .onAppear {
+            NSApp.setActivationPolicy(.regular)
+            NSApp.activate(ignoringOtherApps: true)
+        }
+        .onDisappear {
+            NSApp.setActivationPolicy(.accessory)
+        }
     }
 
     private func wallpaperCanvas(size: CGSize) -> some View {
@@ -207,10 +214,10 @@ struct ContentView: View {
                     }
 
                     VStack(alignment: .leading, spacing: 10) {
-                        setupStep("Apply the first Earth View wallpaper.")
+                        setupStep("Apply your first Earth View wallpaper.")
                         setupStep("Create the local image cache and state files.")
-                        setupStep("Install a user LaunchAgent so rotation continues after login.")
-                        setupStep("If macOS asks for Automation or System Events access, choose OK.")
+                        setupStep("Add EarthLens to your Login Items so rotation continues after restart.")
+                        setupStep("Approve the macOS prompt to allow EarthLens to open at login.")
                     }
 
                     HStack(spacing: 12) {

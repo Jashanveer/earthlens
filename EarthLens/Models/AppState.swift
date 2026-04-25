@@ -42,7 +42,6 @@ struct PersistedState: Codable {
     var currentImageFilename: String?
     var rotationEnabled = false
     var rotationInterval: RotationInterval = .thirtyMinutes
-    var lastKnownExecutablePath: String?
     var lastUpdatedAt: Date?
     var setupCompleted = false
 
@@ -56,7 +55,6 @@ struct PersistedState: Codable {
         currentImageFilename = try container.decodeIfPresent(String.self, forKey: .currentImageFilename)
         rotationEnabled = try container.decodeIfPresent(Bool.self, forKey: .rotationEnabled) ?? false
         rotationInterval = try container.decodeIfPresent(RotationInterval.self, forKey: .rotationInterval) ?? .thirtyMinutes
-        lastKnownExecutablePath = try container.decodeIfPresent(String.self, forKey: .lastKnownExecutablePath)
         lastUpdatedAt = try container.decodeIfPresent(Date.self, forKey: .lastUpdatedAt)
         setupCompleted = try container.decodeIfPresent(Bool.self, forKey: .setupCompleted) ?? false
     }
@@ -68,7 +66,6 @@ struct PersistedState: Codable {
         case currentImageFilename
         case rotationEnabled
         case rotationInterval
-        case lastKnownExecutablePath
         case lastUpdatedAt
         case setupCompleted
     }
@@ -118,12 +115,6 @@ struct CatalogCache: Codable {
     }
 }
 
-struct LaunchAgentStatus {
-    var enabled: Bool
-    var interval: RotationInterval
-    var executablePath: String?
-}
-
 struct AppSnapshot {
     var totalCount: Int
     var seenCount: Int
@@ -166,8 +157,6 @@ enum EarthLensError: LocalizedError {
     case invalidCatalog
     case downloadFailed(String)
     case wallpaperSetFailed(String)
-    case launchAgentFailed(String)
-    case missingExecutablePath
     case stateReadFailed
     case noPreviousWallpaper
 
@@ -181,10 +170,6 @@ enum EarthLensError: LocalizedError {
             return "Download failed: \(message)"
         case .wallpaperSetFailed(let message):
             return "Could not apply the wallpaper: \(message)"
-        case .launchAgentFailed(let message):
-            return "Could not update the background schedule: \(message)"
-        case .missingExecutablePath:
-            return "The app executable path could not be resolved."
         case .stateReadFailed:
             return "The local EarthLens state could not be read."
         case .noPreviousWallpaper:

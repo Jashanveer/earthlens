@@ -12,6 +12,8 @@ dist/
 *.ipa
 *.dSYM.zip
 *.dSYM
+*.dmg
+*.zip
 .claude/
 .code-review-graph/
 .mcp.json

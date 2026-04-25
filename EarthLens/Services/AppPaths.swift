@@ -27,30 +27,10 @@ enum AppPaths {
         supportDirectory.appendingPathComponent("earthlens.log")
     }
 
-    static var launchAgentPlist: URL {
-        let home = FileManager.default.homeDirectoryForCurrentUser
-        return home
-            .appendingPathComponent("Library", isDirectory: true)
-            .appendingPathComponent("LaunchAgents", isDirectory: true)
-            .appendingPathComponent("com.earthlens.wallpaper.plist")
-    }
-
-    static var legacyLaunchAgentPlist: URL {
-        let home = FileManager.default.homeDirectoryForCurrentUser
-        return home
-            .appendingPathComponent("Library", isDirectory: true)
-            .appendingPathComponent("LaunchAgents", isDirectory: true)
-            .appendingPathComponent("com.terraframe.wallpaper.plist")
-    }
-
     static func ensureDirectories() throws {
         try migrateLegacySupportDirectoryIfNeeded()
         try FileManager.default.createDirectory(at: supportDirectory, withIntermediateDirectories: true)
         try FileManager.default.createDirectory(at: imagesDirectory, withIntermediateDirectories: true)
-        try FileManager.default.createDirectory(
-            at: launchAgentPlist.deletingLastPathComponent(),
-            withIntermediateDirectories: true
-        )
     }
 
     private static func migrateLegacySupportDirectoryIfNeeded() throws {

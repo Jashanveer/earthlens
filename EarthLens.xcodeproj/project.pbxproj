@@ -12,11 +12,12 @@
 		A10000020000000000000001 /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000120000000000000001 /* AppModel.swift */; };
 		A10000030000000000000001 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000130000000000000001 /* AppState.swift */; };
 		A10000040000000000000001 /* AppPaths.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000140000000000000001 /* AppPaths.swift */; };
-		A10000050000000000000001 /* LaunchAgentService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000150000000000000001 /* LaunchAgentService.swift */; };
 		A10000060000000000000001 /* EarthLensService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000160000000000000001 /* EarthLensService.swift */; };
+		A10000390000000000000001 /* LoginItemService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000003A000000000000001 /* LoginItemService.swift */; };
 		A10000070000000000000001 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000170000000000000001 /* ContentView.swift */; };
 		A10000080000000000000001 /* GlassPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000180000000000000001 /* GlassPanel.swift */; };
 		A10000090000000000000001 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A10000190000000000000001 /* Assets.xcassets */; };
+		A10000370000000000000001 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = A10000380000000000000001 /* PrivacyInfo.xcprivacy */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -26,11 +27,13 @@
 		A10000120000000000000001 /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
 		A10000130000000000000001 /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
 		A10000140000000000000001 /* AppPaths.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppPaths.swift; sourceTree = "<group>"; };
-		A10000150000000000000001 /* LaunchAgentService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchAgentService.swift; sourceTree = "<group>"; };
 		A10000160000000000000001 /* EarthLensService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EarthLensService.swift; sourceTree = "<group>"; };
+		A1000003A000000000000001 /* LoginItemService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginItemService.swift; sourceTree = "<group>"; };
+		A1000003B000000000000001 /* EarthLens.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = EarthLens.entitlements; sourceTree = "<group>"; };
 		A10000170000000000000001 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		A10000180000000000000001 /* GlassPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassPanel.swift; sourceTree = "<group>"; };
 		A10000190000000000000001 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		A10000380000000000000001 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -61,6 +64,8 @@
 				A10000250000000000000001 /* Services */,
 				A10000260000000000000001 /* Views */,
 				A10000190000000000000001 /* Assets.xcassets */,
+				A10000380000000000000001 /* PrivacyInfo.xcprivacy */,
+				A1000003B000000000000001 /* EarthLens.entitlements */,
 			);
 			path = EarthLens;
 			sourceTree = "<group>";
@@ -85,8 +90,8 @@
 			isa = PBXGroup;
 			children = (
 				A10000140000000000000001 /* AppPaths.swift */,
-				A10000150000000000000001 /* LaunchAgentService.swift */,
 				A10000160000000000000001 /* EarthLensService.swift */,
+				A1000003A000000000000001 /* LoginItemService.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -160,6 +165,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				A10000090000000000000001 /* Assets.xcassets in Resources */,
+				A10000370000000000000001 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -174,7 +180,7 @@
 				A10000070000000000000001 /* ContentView.swift in Sources */,
 				9B16C2F72F8A04D600E50AA2 /* MenuBarMenu.swift in Sources */,
 				A10000080000000000000001 /* GlassPanel.swift in Sources */,
-				A10000050000000000000001 /* LaunchAgentService.swift in Sources */,
+				A10000390000000000000001 /* LoginItemService.swift in Sources */,
 				A10000030000000000000001 /* AppState.swift in Sources */,
 				A10000010000000000000001 /* EarthLensApp.swift in Sources */,
 				A10000060000000000000001 /* EarthLensService.swift in Sources */,
@@ -221,19 +227,22 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = EarthLens/EarthLens.entitlements;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
+				DEVELOPMENT_TEAM = YLN8JUVVX3;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = EarthLens;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.photography";
-				INFOPLIST_KEY_NSAppleEventsUsageDescription = "EarthLens can update your desktop wallpaper across spaces when needed.";
+				INFOPLIST_KEY_LSUIElement = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 2.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.earthlens.mac;
 				PRODUCT_NAME = EarthLens;
 				SDKROOT = macosx;
@@ -246,19 +255,22 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = EarthLens/EarthLens.entitlements;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
+				DEVELOPMENT_TEAM = YLN8JUVVX3;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = EarthLens;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.photography";
-				INFOPLIST_KEY_NSAppleEventsUsageDescription = "EarthLens can update your desktop wallpaper across spaces when needed.";
+				INFOPLIST_KEY_LSUIElement = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 2.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.earthlens.mac;
 				PRODUCT_NAME = EarthLens;
 				SDKROOT = macosx;
