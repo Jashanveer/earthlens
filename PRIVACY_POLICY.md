@@ -10,13 +10,13 @@ does not handle.
 
 - **EarthLens does not collect, transmit, or sell any personal data.**
 - EarthLens does not contain analytics, advertising, or tracking SDKs.
-- All app state stays on your Mac, in
-  `~/Library/Application Support/EarthLens/`.
+- All app state stays on your Mac, inside the app sandbox container under
+  `Library/Application Support/EarthLens/`.
 
 ## Data the app stores locally
 
-EarthLens writes the following files inside your user's Application Support
-directory:
+EarthLens writes the following files inside the app sandbox container's
+Application Support directory:
 
 - `state.json` — wallpaper history, current wallpaper ID, rotation settings.
 - `catalog-cache.json` — cached list of Earth View image IDs and titles.
@@ -45,14 +45,13 @@ sign-in, and no data sent to the developer.
 
 ## System permissions
 
-EarthLens may prompt you for permission to control **System Events** via
-AppleScript. This is only used as a fallback to update your desktop wallpaper
-when the standard `NSWorkspace` API fails. You can deny it; the primary
-wallpaper-setting path will still work for the current Space.
+EarthLens is sandboxed and uses macOS system APIs to set your desktop
+wallpaper. It does not request access to your location, contacts, files,
+photos, camera, microphone, or tracking permission.
 
-If you enable Auto-Rotate, EarthLens installs a user LaunchAgent at
-`~/Library/LaunchAgents/com.earthlens.wallpaper.plist`. This is removed when
-you turn Auto-Rotate off inside the app.
+If you enable Auto-Rotate, EarthLens registers itself as a login item using
+Apple's `SMAppService` API so wallpaper rotation can resume after login. This
+is disabled when you turn Auto-Rotate off inside the app.
 
 ## Children
 

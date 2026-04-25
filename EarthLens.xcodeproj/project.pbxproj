@@ -13,23 +13,23 @@
 		A10000030000000000000001 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000130000000000000001 /* AppState.swift */; };
 		A10000040000000000000001 /* AppPaths.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000140000000000000001 /* AppPaths.swift */; };
 		A10000060000000000000001 /* EarthLensService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000160000000000000001 /* EarthLensService.swift */; };
-		A10000390000000000000001 /* LoginItemService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000003A000000000000001 /* LoginItemService.swift */; };
 		A10000070000000000000001 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000170000000000000001 /* ContentView.swift */; };
 		A10000080000000000000001 /* GlassPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000180000000000000001 /* GlassPanel.swift */; };
 		A10000090000000000000001 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A10000190000000000000001 /* Assets.xcassets */; };
 		A10000370000000000000001 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = A10000380000000000000001 /* PrivacyInfo.xcprivacy */; };
+		A10000390000000000000001 /* LoginItemService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000003A000000000000001 /* LoginItemService.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		9B16C2F62F8A04D600E50AA2 /* MenuBarMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarMenu.swift; sourceTree = "<group>"; };
+		A1000003A000000000000001 /* LoginItemService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginItemService.swift; sourceTree = "<group>"; };
+		A1000003B000000000000001 /* EarthLens.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = EarthLens.entitlements; sourceTree = "<group>"; };
 		A10000100000000000000001 /* EarthLens.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = EarthLens.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A10000110000000000000001 /* EarthLensApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EarthLensApp.swift; sourceTree = "<group>"; };
 		A10000120000000000000001 /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
 		A10000130000000000000001 /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
 		A10000140000000000000001 /* AppPaths.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppPaths.swift; sourceTree = "<group>"; };
 		A10000160000000000000001 /* EarthLensService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EarthLensService.swift; sourceTree = "<group>"; };
-		A1000003A000000000000001 /* LoginItemService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginItemService.swift; sourceTree = "<group>"; };
-		A1000003B000000000000001 /* EarthLens.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = EarthLens.entitlements; sourceTree = "<group>"; };
 		A10000170000000000000001 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		A10000180000000000000001 /* GlassPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassPanel.swift; sourceTree = "<group>"; };
 		A10000190000000000000001 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -243,7 +243,7 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
 				MARKETING_VERSION = 2.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.earthlens.mac;
+				PRODUCT_BUNDLE_IDENTIFIER = com.jashanveer.earthlens;
 				PRODUCT_NAME = EarthLens;
 				SDKROOT = macosx;
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -271,7 +271,7 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 26.0;
 				MARKETING_VERSION = 2.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.earthlens.mac;
+				PRODUCT_BUNDLE_IDENTIFIER = com.jashanveer.earthlens;
 				PRODUCT_NAME = EarthLens;
 				SDKROOT = macosx;
 				SWIFT_EMIT_LOC_STRINGS = YES;

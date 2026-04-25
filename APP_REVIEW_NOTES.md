@@ -25,19 +25,20 @@ no backend service.
 2. The first wallpaper is applied automatically.
 3. Click **Next** to advance to the next wallpaper, **Previous** to go back.
 4. Click **Set Up Automatically** in the setup card to enable Auto-Rotate.
-   - This installs a user LaunchAgent at
-     `~/Library/LaunchAgents/com.earthlens.wallpaper.plist`.
-   - Disable Auto-Rotate to remove the LaunchAgent.
+   - This registers EarthLens as a login item with `SMAppService.mainApp`.
+   - Disable Auto-Rotate to unregister the login item.
 5. The menu bar globe icon exposes the same controls.
 
 **Permissions**
-- The app may request automation access for **System Events** the first time
-  it falls back to AppleScript for wallpaper setting. This prompt is
-  triggered by macOS, not by the developer, and is optional.
+- The app is sandboxed and uses the network client entitlement to download
+  the public Earth View catalog and selected wallpaper images.
+- The app does not request user accounts, location, contacts, files, photos,
+  camera, microphone, or tracking permission.
 
 **Data handling**
 - No personal data is collected, stored on a server, or shared.
-- All app state is in `~/Library/Application Support/EarthLens/`.
+- All app state is stored locally in the app sandbox container under
+  `Library/Application Support/EarthLens/`.
 
 **Distribution model**
 - This build is for direct user distribution / Mac App Store review.
