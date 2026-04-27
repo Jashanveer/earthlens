@@ -6,8 +6,6 @@ A native macOS menu-bar app that sets Google Earth View satellite imagery as you
 
 **Website:** [earth-lens.netlify.app](https://earth-lens.netlify.app/)
 
-![EarthLens](AppStore/screenshots/mac/01-earthlens-main.png)
-
 ## Requirements
 
 macOS 26 Tahoe or later.
