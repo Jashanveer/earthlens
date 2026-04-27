@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>EarthLens Privacy Policy</title>
+  <meta name="description" content="Privacy policy for the EarthLens macOS app.">
+  <style>
+    :root {
+      color-scheme: light dark;
+      --fg: #1d1d1f;
+      --muted: #6e6e73;
+      --bg: #ffffff;
+      --accent: #0071e3;
+      --rule: #e5e5ea;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --fg: #f5f5f7;
+        --muted: #a1a1a6;
+        --bg: #1d1d1f;
+        --accent: #2997ff;
+        --rule: #3a3a3c;
+      }
+    }
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: var(--bg);
+      color: var(--fg);
+      font: 16px/1.6 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    main {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 48px 24px 96px;
+    }
+    h1 {
+      font-size: 2rem;
+      letter-spacing: -0.02em;
+      margin: 0 0 0.25rem;
+    }
+    h2 {
+      font-size: 1.25rem;
+      letter-spacing: -0.01em;
+      margin: 2.5rem 0 0.75rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--rule);
+    }
+    h2:first-of-type { border-top: none; padding-top: 0; }
+    .updated {
+      color: var(--muted);
+      font-size: 0.95rem;
+      margin: 0 0 2rem;
+    }
+    p { margin: 0 0 1rem; }
+    ul { padding-left: 1.25rem; margin: 0 0 1rem; }
+    li { margin-bottom: 0.4rem; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    code {
+      font: 0.9em ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+      background: rgba(127,127,127,0.12);
+      padding: 0.1em 0.35em;
+      border-radius: 4px;
+    }
+    strong { font-weight: 600; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>EarthLens Privacy Policy</h1>
+    <p class="updated">Last updated: April 24, 2026</p>
+
+    <p>
+      EarthLens is a macOS app that sets satellite imagery from Google Earth View
+      as your desktop wallpaper. This document describes what data the app does
+      and does not handle.
+    </p>
+
+    <h2>Summary</h2>
+    <ul>
+      <li><strong>EarthLens does not collect, transmit, or sell any personal data.</strong></li>
+      <li>EarthLens does not contain analytics, advertising, or tracking SDKs.</li>
+      <li>All app state stays on your Mac, inside the app sandbox container under
+          <code>Library/Application Support/EarthLens/</code>.</li>
+    </ul>
+
+    <h2>Data the app stores locally</h2>
+    <p>
+      EarthLens writes the following files inside the app sandbox container's
+      Application Support directory:
+    </p>
+    <ul>
+      <li><code>state.json</code> — wallpaper history, current wallpaper ID, rotation settings.</li>
+      <li><code>catalog-cache.json</code> — cached list of Earth View image IDs and titles.</li>
+      <li><code>Images/</code> — downloaded wallpaper JPEG files (one per wallpaper viewed).</li>
+      <li><code>earthlens.log</code> — local diagnostic log capped at ~256 KB; not transmitted.</li>
+    </ul>
+    <p>
+      These files never leave your device. Deleting the EarthLens app and the
+      <code>EarthLens</code> folder above removes all locally stored data.
+    </p>
+
+    <h2>Network requests</h2>
+    <p>To function, EarthLens makes outbound HTTPS requests to:</p>
+    <ul>
+      <li><code>https://raw.githubusercontent.com/limhenry/earthview/master/earthview.json</code>
+          — to download the public Earth View catalog (refreshed about once a week).</li>
+      <li><code>https://www.gstatic.com/prettyearth/assets/full/&lt;id&gt;.jpg</code>
+          — to download each wallpaper image you view.</li>
+    </ul>
+    <p>
+      These requests are made directly from your Mac to GitHub and Google's
+      public CDNs. Your IP address and standard HTTP headers are visible to
+      those operators under their own privacy policies. EarthLens does not send
+      any account, identifier, telemetry, or usage data of its own.
+    </p>
+    <p>
+      EarthLens does not run a backend server. There is no EarthLens account,
+      no sign-in, and no data sent to the developer.
+    </p>
+
+    <h2>System permissions</h2>
+    <p>
+      EarthLens is sandboxed and uses macOS system APIs to set your desktop
+      wallpaper. It does not request access to your location, contacts, files,
+      photos, camera, microphone, or tracking permission.
+    </p>
+    <p>
+      If you enable Auto-Rotate, EarthLens registers itself as a login item
+      using Apple's <code>SMAppService</code> API so wallpaper rotation can
+      resume after login. This is disabled when you turn Auto-Rotate off inside
+      the app.
+    </p>
+
+    <h2>Children</h2>
+    <p>
+      EarthLens is not directed to children. We do not knowingly process data
+      from children.
+    </p>
+
+    <h2>Changes</h2>
+    <p>
+      If this policy is updated, the new version will replace this file in the
+      EarthLens repository on GitHub.
+    </p>
+
+    <h2>Contact</h2>
+    <p>
+      Questions about this policy can be sent to
+      <a href="mailto:mailforjashanveer@gmail.com">mailforjashanveer@gmail.com</a>.
+    </p>
+  </main>
+</body>
+</html>
