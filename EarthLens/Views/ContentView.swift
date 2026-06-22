@@ -94,21 +94,31 @@ struct ContentView: View {
                 Spacer()
 
                 HStack(spacing: 12) {
-                    Button {
-                        Task { await model.previousWallpaper() }
-                    } label: {
-                        Label("Previous", systemImage: "arrow.left")
-                    }
-                    .capsuleActionStyle(prominent: false)
-                    .disabled(model.isBusy || !model.snapshot.canGoPrevious)
+                    if model.errorMessage != nil && model.snapshot.currentID == nil {
+                        Button {
+                            Task { await model.retryInitialLoad() }
+                        } label: {
+                            Label("Try Again", systemImage: "arrow.clockwise")
+                        }
+                        .capsuleActionStyle(prominent: true)
+                        .disabled(model.isBusy)
+                    } else {
+                        Button {
+                            Task { await model.previousWallpaper() }
+                        } label: {
+                            Label("Previous", systemImage: "arrow.left")
+                        }
+                        .capsuleActionStyle(prominent: false)
+                        .disabled(model.isBusy || !model.snapshot.canGoPrevious)
 
-                    Button {
-                        Task { await model.changeWallpaper() }
-                    } label: {
-                        Label("Next", systemImage: "arrow.right")
+                        Button {
+                            Task { await model.changeWallpaper() }
+                        } label: {
+                            Label("Next", systemImage: "arrow.right")
+                        }
+                        .capsuleActionStyle(prominent: true)
+                        .disabled(model.isBusy)
                     }
-                    .capsuleActionStyle(prominent: true)
-                    .disabled(model.isBusy)
                 }
             }
             .padding(28)

@@ -116,16 +116,11 @@ struct CatalogCache: Codable {
 }
 
 struct AppSnapshot {
-    var totalCount: Int
-    var seenCount: Int
-    var remainingCount: Int
     var currentID: Int?
     var currentImageURL: URL?
-    var catalogUpdatedAt: Date?
     var rotationEnabled: Bool
     var rotationInterval: RotationInterval
     var canGoPrevious: Bool
-    var canGoForward: Bool
     var displayTitle: String
     var displaySubtitle: String?
     var setupCompleted: Bool
@@ -137,16 +132,11 @@ struct AppSnapshot {
     }
 
     static let empty = AppSnapshot(
-        totalCount: 0,
-        seenCount: 0,
-        remainingCount: 0,
         currentID: nil,
         currentImageURL: nil,
-        catalogUpdatedAt: nil,
         rotationEnabled: false,
         rotationInterval: .thirtyMinutes,
         canGoPrevious: false,
-        canGoForward: false,
         displayTitle: "Ready for a first wallpaper",
         displaySubtitle: "Load the first scene to start the gallery.",
         setupCompleted: false,

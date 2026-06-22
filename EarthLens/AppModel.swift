@@ -28,6 +28,11 @@ final class AppModel: ObservableObject {
         guard !hasLoaded else { return }
         hasLoaded = true
 
+        // Decide first-run onboarding from persisted state up front, so the setup
+        // guide appears even when the very first catalog fetch fails (e.g. offline)
+        // and never pops up unexpectedly after a later successful action.
+        showsSetupGuide = !Self.persistedSetupCompleted()
+
         await perform("Loading EarthLens") {
             try await self.service.loadSnapshot()
         }
@@ -36,7 +41,19 @@ final class AppModel: ObservableObject {
             await perform("Setting your first wallpaper") {
                 try await self.service.setNextWallpaper()
             }
+        } else if snapshot.currentImageURL == nil {
+            // We have a current scene on record but its cached file is missing
+            // (manual delete, reinstall, cache prune) — re-download and re-apply so
+            // the desktop doesn't fall back to a blank background.
+            await perform("Restoring your wallpaper") {
+                try await self.service.reapplyCurrentWallpaper()
+            }
         }
+    }
+
+    func retryInitialLoad() async {
+        hasLoaded = false
+        await handleAppLaunch()
     }
 
     func changeWallpaper() async {
@@ -93,7 +110,7 @@ final class AppModel: ObservableObject {
         do {
             let newSnapshot = try await action()
             snapshot = newSnapshot
-            previewImage = newSnapshot.currentImageURL.flatMap(NSImage.init(contentsOf:))
+            previewImage = await loadPreviewImage(from: newSnapshot.currentImageURL)
             showsSetupGuide = !newSnapshot.setupCompleted
             statusMessage = makeStatusMessage(for: newSnapshot)
         } catch {
@@ -103,6 +120,23 @@ final class AppModel: ObservableObject {
 
         isBusy = false
         restartRotationLoop()
+    }
+
+    private func rotateToNextWallpaper() async {
+        await perform("Loading the next wallpaper") {
+            try await self.service.setNextWallpaper(fromTimer: true)
+        }
+    }
+
+    private func loadPreviewImage(from url: URL?) async -> NSImage? {
+        guard let url else { return nil }
+        // Decode the full-resolution JPEG off the main actor. NSImage isn't Sendable
+        // below macOS 14, so hand it back in an unchecked box — the image is created
+        // inside the task and never touched there again, so the transfer is safe.
+        let boxed = await Task.detached(priority: .utility) {
+            UncheckedSendableBox(NSImage(contentsOf: url))
+        }.value
+        return boxed.value
     }
 
     private func restartRotationLoop() {
@@ -119,11 +153,21 @@ final class AppModel: ObservableObject {
                 guard let self, !Task.isCancelled else { return }
                 guard self.snapshot.rotationEnabled else { return }
                 if !self.isBusy {
-                    await self.changeWallpaper()
+                    await self.rotateToNextWallpaper()
                     return
                 }
             }
         }
+    }
+
+    private static func persistedSetupCompleted() -> Bool {
+        guard
+            let data = try? Data(contentsOf: AppPaths.stateFile),
+            let dict = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+        else {
+            return false
+        }
+        return (dict["setupCompleted"] as? Bool) ?? false
     }
 
     private func makeStatusMessage(for snapshot: AppSnapshot) -> String {
@@ -156,11 +200,19 @@ final class AppModel: ObservableObject {
     }
 
     private func reapplyCurrentWallpaperForScreenChange() async {
+        // Both this path and perform() do load -> mutate -> save on the service;
+        // overlapping them can persist a stale cursor/history. Bail if something is
+        // already in flight, and hold the busy flag so a rotation tick or user
+        // action waits its turn rather than racing this reapply.
+        guard !isBusy else { return }
+        isBusy = true
+        defer { isBusy = false }
+
         do {
             let newSnapshot = try await service.reapplyCurrentWallpaper()
             guard !Task.isCancelled else { return }
             snapshot = newSnapshot
-            previewImage = newSnapshot.currentImageURL.flatMap(NSImage.init(contentsOf:))
+            previewImage = await loadPreviewImage(from: newSnapshot.currentImageURL)
             statusMessage = makeStatusMessage(for: newSnapshot)
             errorMessage = nil
         } catch {
@@ -168,5 +220,13 @@ final class AppModel: ObservableObject {
             errorMessage = error.localizedDescription
             statusMessage = "EarthLens needs attention."
         }
+    }
+}
+
+private struct UncheckedSendableBox<Value>: @unchecked Sendable {
+    let value: Value
+
+    init(_ value: Value) {
+        self.value = value
     }
 }

@@ -7,6 +7,7 @@ actor EarthLensService {
     private let imageBaseURL = URL(string: "https://www.gstatic.com/prettyearth/assets/full/")!
     private let catalogMaxAge: TimeInterval = 60 * 60 * 24 * 7
     private let maxLogFileBytes: UInt64 = 256 * 1024
+    private let maxImageCacheBytes: UInt64 = 300 * 1024 * 1024
 
     func loadSnapshot(forceRefresh: Bool = false) async throws -> AppSnapshot {
         try AppPaths.ensureDirectories()
@@ -19,13 +20,16 @@ actor EarthLensService {
         return makeSnapshot(from: state, catalog: catalog)
     }
 
-    func setNextWallpaper() async throws -> AppSnapshot {
+    func setNextWallpaper(fromTimer: Bool = false) async throws -> AppSnapshot {
         try AppPaths.ensureDirectories()
 
         var state = try loadState()
         normalize(&state)
         let catalog = try await loadCatalog(forceRefresh: false)
-        try await advanceToNextWallpaper(state: &state, catalog: catalog)
+        // A user pressing Next walks forward through history; the rotation timer
+        // always advances to a fresh scene instead of replaying images the user
+        // already navigated back through.
+        try await advanceToNextWallpaper(state: &state, catalog: catalog, followHistory: !fromTimer)
 
         try saveState(state)
         return makeSnapshot(from: state, catalog: catalog)
@@ -105,6 +109,11 @@ actor EarthLensService {
                 appendLog("Login item registration failed: \(error.localizedDescription)")
                 throw EarthLensError.loginItemFailed(error.localizedDescription)
             }
+
+            if LoginItemService.requiresApproval {
+                appendLog("Login item requires approval in System Settings.")
+                await LoginItemService.openLoginItemsSettings()
+            }
         } else {
             do {
                 try await LoginItemService.unregister()
@@ -180,7 +189,6 @@ actor EarthLensService {
     }
 
     private func makeSnapshot(from state: PersistedState, catalog: CatalogCache) -> AppSnapshot {
-        let uniqueHistoryCount = Set(state.history).count
         let historyCursor = state.historyCursor ?? (state.history.isEmpty ? nil : state.history.count - 1)
         let currentEntry = catalog.entries.first { $0.id == state.currentID }
         let currentImageURL: URL? = {
@@ -190,16 +198,11 @@ actor EarthLensService {
         }()
 
         return AppSnapshot(
-            totalCount: catalog.entries.count,
-            seenCount: uniqueHistoryCount,
-            remainingCount: max(catalog.entries.count - uniqueHistoryCount, 0),
             currentID: state.currentID,
             currentImageURL: currentImageURL,
-            catalogUpdatedAt: catalog.fetchedAt,
             rotationEnabled: state.rotationEnabled,
             rotationInterval: state.rotationInterval,
             canGoPrevious: (historyCursor ?? 0) > 0,
-            canGoForward: historyCursor.map { $0 < state.history.count - 1 } ?? false,
             displayTitle: currentEntry?.title ?? (state.currentID == nil ? "Ready for a first wallpaper" : "Earth View"),
             displaySubtitle: currentEntry?.subtitle ?? (state.currentID == nil ? "Load the first scene to start the gallery." : nil),
             setupCompleted: state.setupCompleted,
@@ -371,8 +374,8 @@ actor EarthLensService {
         return result
     }
 
-    private func advanceToNextWallpaper(state: inout PersistedState, catalog: CatalogCache) async throws {
-        if let cursor = state.historyCursor, cursor < state.history.count - 1 {
+    private func advanceToNextWallpaper(state: inout PersistedState, catalog: CatalogCache, followHistory: Bool = true) async throws {
+        if followHistory, let cursor = state.historyCursor, cursor < state.history.count - 1 {
             let nextID = state.history[cursor + 1]
             let imageURL = try await downloadImage(id: nextID)
 
@@ -385,7 +388,7 @@ actor EarthLensService {
             return
         }
 
-        let nextID = try pickRandomUnusedID(from: catalog.ids, history: &state.history)
+        let nextID = try pickRandomUnusedID(from: catalog.ids, history: state.history, currentID: state.currentID)
         let imageURL = try await downloadImage(id: nextID)
 
         try await setWallpaper(at: imageURL)
@@ -397,19 +400,19 @@ actor EarthLensService {
         state.lastUpdatedAt = Date()
     }
 
-    private func pickRandomUnusedID(from catalog: [Int], history: inout [Int]) throws -> Int {
+    private func pickRandomUnusedID(from catalog: [Int], history: [Int], currentID: Int?) throws -> Int {
         guard !catalog.isEmpty else {
             throw EarthLensError.emptyCatalog
         }
 
-        var seen = Set(history)
-        if seen.count >= catalog.count {
-            history.removeAll()
-            seen.removeAll()
-        }
+        let seen = Set(history)
+        let unseen = catalog.filter { !seen.contains($0) }
 
-        let remaining = catalog.filter { !seen.contains($0) }
-        guard let nextID = remaining.randomElement() else {
+        // Once every scene has been shown, keep cycling through the full catalog
+        // rather than wiping history — that preserves the user's back-navigation
+        // trail. Exclude the current ID so a wrap never re-picks the on-screen image.
+        let pool = unseen.isEmpty ? catalog.filter { $0 != currentID } : unseen
+        guard let nextID = pool.randomElement() ?? catalog.randomElement() else {
             throw EarthLensError.emptyCatalog
         }
 
@@ -419,14 +422,27 @@ actor EarthLensService {
     private func downloadImage(id: Int) async throws -> URL {
         let destination = AppPaths.imagesDirectory.appendingPathComponent("\(id).jpg")
         if fileManager.fileExists(atPath: destination.path) {
-            return destination
+            // A cached file can be corrupt — e.g. a 200 response with a non-image
+            // body that an older build saved before validation existed. Re-validate
+            // and fall through to re-download when it isn't a real JPEG.
+            if isValidJPEG(at: destination) {
+                return destination
+            }
+            try? fileManager.removeItem(at: destination)
         }
 
         let remoteURL = imageBaseURL.appendingPathComponent("\(id).jpg")
         let (temporaryURL, response) = try await URLSession.shared.download(from: remoteURL)
+        // URLSession writes the body to a temp file; make sure it is never left
+        // behind, including on every early throw below.
+        defer { try? fileManager.removeItem(at: temporaryURL) }
 
         guard let httpResponse = response as? HTTPURLResponse, 200..<300 ~= httpResponse.statusCode else {
             throw EarthLensError.downloadFailed("Image #\(id) was not available.")
+        }
+
+        guard isValidJPEG(at: temporaryURL) else {
+            throw EarthLensError.downloadFailed("Image #\(id) was not a valid image.")
         }
 
         if fileManager.fileExists(atPath: destination.path) {
@@ -434,7 +450,54 @@ actor EarthLensService {
         }
 
         try fileManager.moveItem(at: temporaryURL, to: destination)
+        pruneImageCache(keeping: destination.lastPathComponent)
         return destination
+    }
+
+    private func isValidJPEG(at url: URL) -> Bool {
+        guard let handle = try? FileHandle(forReadingFrom: url) else { return false }
+        defer { try? handle.close() }
+        guard let bytes = try? handle.read(upToCount: 3), bytes.count == 3 else { return false }
+        return Array(bytes) == [0xFF, 0xD8, 0xFF]
+    }
+
+    private func pruneImageCache(keeping currentFilename: String?) {
+        let keys: Set<URLResourceKey> = [.fileSizeKey, .contentModificationDateKey]
+        guard let entries = try? fileManager.contentsOfDirectory(
+            at: AppPaths.imagesDirectory,
+            includingPropertiesForKeys: Array(keys),
+            options: [.skipsHiddenFiles]
+        ) else {
+            return
+        }
+
+        var files: [(url: URL, size: UInt64, modified: Date)] = []
+        var totalBytes: UInt64 = 0
+        for url in entries {
+            let values = try? url.resourceValues(forKeys: keys)
+            let size = UInt64(values?.fileSize ?? 0)
+            files.append((url, size, values?.contentModificationDate ?? .distantPast))
+            totalBytes += size
+        }
+
+        guard totalBytes > maxImageCacheBytes else { return }
+
+        // Evict oldest-first until back under budget, but never delete the wallpaper
+        // currently on the desktop. Evicted scenes are simply re-downloaded on demand
+        // if the user navigates back to them.
+        let evictable = files
+            .filter { $0.url.lastPathComponent != currentFilename }
+            .sorted { $0.modified < $1.modified }
+
+        for file in evictable {
+            guard totalBytes > maxImageCacheBytes else { break }
+            do {
+                try fileManager.removeItem(at: file.url)
+                totalBytes -= file.size
+            } catch {
+                continue
+            }
+        }
     }
 
     private func currentImageURL(for state: PersistedState) async throws -> URL? {

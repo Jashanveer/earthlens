@@ -11,10 +11,24 @@ enum LoginItemService {
     }
 
     static var isEnabled: Bool {
-        SMAppService.mainApp.status == .enabled
+        switch SMAppService.mainApp.status {
+        case .enabled, .requiresApproval:
+            // `.requiresApproval` means registration succeeded but the user still
+            // has to approve EarthLens in System Settings > General > Login Items.
+            // Treat it as "on" so the toggle reflects that we asked to launch at
+            // login, instead of silently snapping back to off.
+            return true
+        default:
+            return false
+        }
     }
 
-    static var status: SMAppService.Status {
-        SMAppService.mainApp.status
+    static var requiresApproval: Bool {
+        SMAppService.mainApp.status == .requiresApproval
+    }
+
+    @MainActor
+    static func openLoginItemsSettings() {
+        SMAppService.openSystemSettingsLoginItems()
     }
 }
