@@ -5,9 +5,24 @@ struct MenuBarMenu: View {
     @Environment(\.openWindow) private var openWindow
 
     var body: some View {
-        if let title = model.snapshot.currentID.map({ _ in model.snapshot.displayTitle }) {
-            Text(title)
+        if model.snapshot.currentID != nil {
+            Text(model.snapshot.displayTitle)
                 .font(.headline)
+
+            if let url = model.snapshot.currentEarthViewURL {
+                Button {
+                    NSWorkspace.shared.open(url)
+                } label: {
+                    Label("Open in Earth View", systemImage: "globe")
+                }
+            }
+
+            Button {
+                model.exportCurrentWallpaper()
+            } label: {
+                Label("Save Current Wallpaper…", systemImage: "square.and.arrow.down")
+            }
+            .disabled(model.snapshot.currentImageURL == nil)
         }
 
         Divider()

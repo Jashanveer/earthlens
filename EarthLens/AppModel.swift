@@ -1,5 +1,6 @@
 import AppKit
 import Foundation
+import UniformTypeIdentifiers
 
 @MainActor
 final class AppModel: ObservableObject {
@@ -102,6 +103,29 @@ final class AppModel: ObservableObject {
         }
     }
 
+    func exportCurrentWallpaper() {
+        guard let sourceURL = snapshot.currentImageURL else { return }
+
+        let panel = NSSavePanel()
+        panel.allowedContentTypes = [.jpeg]
+        panel.nameFieldStringValue = "EarthLens-\(snapshot.currentID.map(String.init) ?? "wallpaper").jpg"
+        panel.canCreateDirectories = true
+        panel.title = "Save Earth View Wallpaper"
+        panel.message = "Saved for personal use. Imagery © Google."
+
+        NSApp.activate(ignoringOtherApps: true)
+        guard panel.runModal() == .OK, let destinationURL = panel.url else { return }
+
+        do {
+            if FileManager.default.fileExists(atPath: destinationURL.path) {
+                try FileManager.default.removeItem(at: destinationURL)
+            }
+            try FileManager.default.copyItem(at: sourceURL, to: destinationURL)
+        } catch {
+            errorMessage = "Could not save the image: \(error.localizedDescription)"
+        }
+    }
+
     private func perform(_ message: String, action: @escaping () async throws -> AppSnapshot) async {
         isBusy = true
         statusMessage = message
@@ -109,8 +133,9 @@ final class AppModel: ObservableObject {
 
         do {
             let newSnapshot = try await action()
+            let image = await loadPreviewImage(from: newSnapshot.currentImageURL)
             snapshot = newSnapshot
-            previewImage = await loadPreviewImage(from: newSnapshot.currentImageURL)
+            previewImage = image
             showsSetupGuide = !newSnapshot.setupCompleted
             statusMessage = makeStatusMessage(for: newSnapshot)
         } catch {
@@ -211,8 +236,10 @@ final class AppModel: ObservableObject {
         do {
             let newSnapshot = try await service.reapplyCurrentWallpaper()
             guard !Task.isCancelled else { return }
+            let image = await loadPreviewImage(from: newSnapshot.currentImageURL)
+            guard !Task.isCancelled else { return }
             snapshot = newSnapshot
-            previewImage = await loadPreviewImage(from: newSnapshot.currentImageURL)
+            previewImage = image
             statusMessage = makeStatusMessage(for: newSnapshot)
             errorMessage = nil
         } catch {

@@ -36,6 +36,8 @@ struct ContentView: View {
                     Image(nsImage: previewImage)
                         .resizable()
                         .scaledToFill()
+                        .id(model.snapshot.currentID)
+                        .transition(.opacity)
                 } else {
                     Color(.separatorColor)
                     .overlay {
@@ -45,6 +47,7 @@ struct ContentView: View {
                     }
                 }
             }
+            .animation(.easeInOut(duration: 0.45), value: model.snapshot.currentID)
             .frame(
                 width: max(size.width - outerPadding * 2, 1),
                 height: max(size.height - outerPadding * 2, 1)
@@ -89,6 +92,11 @@ struct ContentView: View {
                             .foregroundStyle(.white.opacity(0.72))
                             .fixedSize(horizontal: false, vertical: true)
                     }
+
+                    if model.snapshot.currentID != nil {
+                        sceneActions
+                            .padding(.top, 2)
+                    }
                 }
 
                 Spacer()
@@ -125,6 +133,36 @@ struct ContentView: View {
         }
         .padding(outerPadding)
         .frame(width: size.width, height: size.height)
+    }
+
+    private var sceneActions: some View {
+        HStack(spacing: 18) {
+            if let url = model.snapshot.currentEarthViewURL {
+                Button {
+                    NSWorkspace.shared.open(url)
+                } label: {
+                    Label("Open in Earth View", systemImage: "arrow.up.forward")
+                }
+                .buttonStyle(.plain)
+            }
+
+            if model.snapshot.currentImageURL != nil {
+                Button {
+                    model.exportCurrentWallpaper()
+                } label: {
+                    Label("Save Image", systemImage: "square.and.arrow.down")
+                }
+                .buttonStyle(.plain)
+            }
+
+            if let id = model.snapshot.currentID {
+                Text("#\(id)")
+                    .foregroundStyle(.white.opacity(0.5))
+            }
+        }
+        .font(.system(size: 12, weight: .semibold, design: .rounded))
+        .foregroundStyle(.white.opacity(0.85))
+        .labelStyle(.titleAndIcon)
     }
 
     private var topLeftStatus: some View {

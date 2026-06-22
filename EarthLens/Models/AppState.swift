@@ -75,6 +75,16 @@ struct EarthViewEntry: Codable, Hashable {
     var id: Int
     var title: String?
     var subtitle: String?
+    var latitude: Double?
+    var longitude: Double?
+
+    init(id: Int, title: String?, subtitle: String?, latitude: Double? = nil, longitude: Double? = nil) {
+        self.id = id
+        self.title = title
+        self.subtitle = subtitle
+        self.latitude = latitude
+        self.longitude = longitude
+    }
 }
 
 struct CatalogCache: Codable {

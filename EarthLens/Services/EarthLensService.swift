@@ -204,10 +204,32 @@ actor EarthLensService {
             rotationInterval: state.rotationInterval,
             canGoPrevious: (historyCursor ?? 0) > 0,
             displayTitle: currentEntry?.title ?? (state.currentID == nil ? "Ready for a first wallpaper" : "Earth View"),
-            displaySubtitle: currentEntry?.subtitle ?? (state.currentID == nil ? "Load the first scene to start the gallery." : nil),
+            displaySubtitle: subtitleLine(for: currentEntry, currentID: state.currentID),
             setupCompleted: state.setupCompleted,
             openAtLogin: LoginItemService.isEnabled
         )
+    }
+
+    private func subtitleLine(for entry: EarthViewEntry?, currentID: Int?) -> String? {
+        guard currentID != nil else {
+            return "Load the first scene to start the gallery."
+        }
+
+        var parts: [String] = []
+        if let existing = entry?.subtitle, !existing.isEmpty {
+            parts.append(existing)
+        }
+        if let coordinates = formattedCoordinates(latitude: entry?.latitude, longitude: entry?.longitude) {
+            parts.append(coordinates)
+        }
+        return parts.isEmpty ? nil : parts.joined(separator: "  •  ")
+    }
+
+    private func formattedCoordinates(latitude: Double?, longitude: Double?) -> String? {
+        guard let latitude, let longitude else { return nil }
+        let lat = String(format: "%.4f° %@", abs(latitude), latitude >= 0 ? "N" : "S")
+        let lon = String(format: "%.4f° %@", abs(longitude), longitude >= 0 ? "E" : "W")
+        return "\(lat), \(lon)"
     }
 
     private func loadCatalog(forceRefresh: Bool) async throws -> CatalogCache {
@@ -290,17 +312,39 @@ actor EarthLensService {
         } ?? []
 
         let locationLine = uniqueStrings([locality, region, country] + geocode).joined(separator: ", ")
+        let coordinates = parseCoordinates(from: item["map"])
 
         if let explicitTitle {
             let subtitle = normalizedLine(locationLine, excluding: explicitTitle)
-            return EarthViewEntry(id: id, title: explicitTitle, subtitle: subtitle)
+            return EarthViewEntry(id: id, title: explicitTitle, subtitle: subtitle, latitude: coordinates?.latitude, longitude: coordinates?.longitude)
         }
 
         if !locationLine.isEmpty {
-            return EarthViewEntry(id: id, title: locationLine, subtitle: nil)
+            return EarthViewEntry(id: id, title: locationLine, subtitle: nil, latitude: coordinates?.latitude, longitude: coordinates?.longitude)
         }
 
-        return EarthViewEntry(id: id, title: nil, subtitle: nil)
+        return EarthViewEntry(id: id, title: nil, subtitle: nil, latitude: coordinates?.latitude, longitude: coordinates?.longitude)
+    }
+
+    private func parseCoordinates(from value: Any?) -> (latitude: Double, longitude: Double)? {
+        guard let string = value as? String else { return nil }
+
+        // Earth View map links embed the location as "@lat,lon" — e.g.
+        // https://www.google.com/maps/@-10.040181,143.560709,12z/data=...
+        let pattern = #"@(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)"#
+        guard
+            let regex = try? NSRegularExpression(pattern: pattern),
+            let match = regex.firstMatch(in: string, range: NSRange(string.startIndex..<string.endIndex, in: string)),
+            match.numberOfRanges > 2,
+            let latRange = Range(match.range(at: 1), in: string),
+            let lonRange = Range(match.range(at: 2), in: string),
+            let latitude = Double(string[latRange]),
+            let longitude = Double(string[lonRange])
+        else {
+            return nil
+        }
+
+        return (latitude, longitude)
     }
 
     private func parseID(from value: Any?) -> Int? {
